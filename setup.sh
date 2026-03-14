@@ -21,6 +21,31 @@ if [ "$EUID" -ne 0 ]; then
     err "Ejecutar como root: sudo ./setup.sh"
 fi
 
+# ============================================
+# Detectar dirección I2C del SH1106
+# SA0=GND → 0x3C (más común)
+# SA0=VCC → 0x3D
+# ============================================
+detect_sh1106_addr() {
+    local bus=$1
+    local addr=""
+
+    for a in 3c 3d; do
+        if i2cdetect -y "$bus" 2>/dev/null | grep -q "$a"; then
+            addr="0x${a}"
+            break
+        fi
+    done
+
+    if [ -z "$addr" ]; then
+        warn "SH1106 no detectado en 0x3C ni 0x3D en i2c-${bus}"
+        warn "Usando 0x3C por defecto — verifica la conexión"
+        addr="0x3c"
+    fi
+
+    echo "$addr"
+}
+
 BASE_DIR="$(cd "$(dirname "$0")" && pwd)"
 KERNEL_VER="$(uname -r)"
 MODEL=$(cat /proc/device-tree/model 2>/dev/null || echo "unknown")
@@ -142,9 +167,21 @@ else
         info "Raspberry Pi 3/4 detectada"
     fi
 
-    dtc -@ -I dts -O dtb -o "${DRIVER_DIR}/sh1106.dtbo" "$DTS" 2>/dev/null
+    # Detectar dirección I2C del SH1106 en el bus GPIO
+    info "Escaneando bus I2C..."
+    I2C_BUS=1
+    # Activar i2c_arm si no está activo aún (puede no estar hasta reboot)
+    modprobe i2c-dev 2>/dev/null || true
+    SH1106_ADDR=$(detect_sh1106_addr $I2C_BUS)
+    SH1106_ADDR_HEX="${SH1106_ADDR#0x}"
+    ok "SH1106 en dirección ${SH1106_ADDR}"
+
+    # Generar overlay con la dirección correcta
+    sed "s/reg = <0x3c>/reg = <${SH1106_ADDR}>/; s/sh1106@3c/sh1106@${SH1106_ADDR_HEX}/"         "$DTS" > "${DRIVER_DIR}/sh1106-current.dts"
+
+    dtc -@ -I dts -O dtb -o "${DRIVER_DIR}/sh1106.dtbo"         "${DRIVER_DIR}/sh1106-current.dts" 2>/dev/null
     cp "${DRIVER_DIR}/sh1106.dtbo" /boot/overlays/
-    ok "Device tree overlay instalado"
+    ok "Device tree overlay instalado (addr ${SH1106_ADDR})"
 
     if ! grep -q "dtoverlay=sh1106" "$CONFIG"; then
         echo "dtoverlay=sh1106" >> "$CONFIG"
@@ -207,7 +244,9 @@ modprobe sh1106
 if [ "$USE_USB" = true ]; then
     # Instanciar manualmente ahora (sin reboot)
     sleep 2
-    echo "sh1106 0x3c" > /sys/bus/i2c/devices/i2c-${USB_BUS}/new_device 2>/dev/null || true
+    USB_ADDR=$(detect_sh1106_addr "$USB_BUS")
+    echo "sh1106 ${USB_ADDR}" > /sys/bus/i2c/devices/i2c-${USB_BUS}/new_device 2>/dev/null || true
+    ok "SH1106 instanciado en i2c-${USB_BUS} @ ${USB_ADDR}"
 fi
 
 sleep 1
