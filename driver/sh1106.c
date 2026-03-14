@@ -30,7 +30,7 @@ struct sh1106_data {
     unsigned long ioctl_count;
     ktime_t last_update;
 
-    /* MEJORA 1: acceso exclusivo — solo un proceso puede abrir /dev/sh1106 */
+    /* acceso exclusivo — solo un proceso puede abrir /dev/sh1106 */
     atomic_t open_count;
 
     /* Flag de hardware presente — false si la pantalla no responde por I2C.
@@ -41,7 +41,7 @@ struct sh1106_data {
 
 // =============== FUNCIONES I2C ===============
 
-/* MEJORA 3: manejo de errores I2C — dev_err ya estaba, añadimos
+/* manejo de errores I2C — dev_err ya estaba, añadimos
  * retorno consistente y comprobación en todos los callers */
 static int sh1106_send_command(struct i2c_client *client, u8 cmd)
 {
@@ -71,7 +71,7 @@ static int sh1106_hw_init(struct i2c_client *client)
 {
     int ret;
 
-    /* MEJORA 4: dev_info → dev_dbg para no saturar el log en producción.
+    /* dev_dbg para no saturar el log en producción.
      * Para verlo: echo 8 > /proc/sys/kernel/printk  o  dyndbg */
     dev_dbg(&client->dev, "Inicializando hardware...\n");
 
