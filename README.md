@@ -10,6 +10,16 @@ Linux kernel driver and C++ userspace library for **SH1106 OLED 128x64** display
 
 ---
 
+## Screenshots
+
+| Boot logo | System dashboard |
+|---|---|
+| ![Boot logo](docs/boot.jpg) | ![Dashboard](docs/dashboard.jpg) |
+
+> Add your photos to `docs/boot.jpg` and `docs/dashboard.jpg`
+
+---
+
 ## Features
 
 - **Kernel driver** — char device `/dev/sh1106`, sysfs control, ioctl commands
@@ -93,6 +103,9 @@ Your Application
 
 ```
 sh1106_driver/
+├── docs/                      Photos for README
+│   ├── boot.jpg               Boot logo photo
+│   └── dashboard.jpg          Dashboard photo
 ├── driver/                    Kernel module
 │   ├── sh1106.c               Main driver
 │   ├── sh1106_ioctl.h         ioctl commands (shared kernel/userspace)
@@ -128,10 +141,37 @@ sudo apt install build-essential raspberrypi-kernel-headers \
                  device-tree-compiler i2c-tools
 ```
 
+### Enable I2C
+
+Before installing, make sure I2C is enabled on your Raspberry Pi.
+
+**Option 1 — raspi-config (recommended):**
+```bash
+sudo raspi-config
+# Interface Options → I2C → Enable
+sudo reboot
+```
+
+**Option 2 — manually:**
+```bash
+# Add to /boot/firmware/config.txt (Pi 4/5) or /boot/config.txt (Pi 3)
+echo "dtparam=i2c_arm=on" | sudo tee -a /boot/firmware/config.txt
+sudo reboot
+```
+
+**Verify I2C is active:**
+```bash
+ls /dev/i2c-*          # should show /dev/i2c-1
+i2cdetect -y 1         # should show 3c at address 0x3C
+```
+
+> `setup.sh` adds `dtparam=i2c_arm=on` automatically if missing, but the
+> reboot is still required for it to take effect.
+
 ### One-command install
 
 ```bash
-git clone https://github.com/yourusername/sh1106_driver
+git clone https://github.com/daavidruizz/sh1106_driver
 cd sh1106_driver
 sudo ./setup.sh
 sudo reboot
@@ -157,9 +197,25 @@ cd ../dashboard && sudo make -f Makefile.dashboard install
 
 ---
 
-## Usage
+## Using the Library in Your Own Application
 
-### Minimal example
+Once installed, **any application** on the system can use the display. No need to copy source files — just link against the installed library.
+
+### 1. Include the header
+
+```cpp
+#include <sh1106.h>
+```
+
+### 2. Compile with pkg-config
+
+```bash
+g++ my_app.cpp $(pkg-config --cflags --libs sh1106) -o my_app
+```
+
+That's it. `pkg-config` automatically provides the correct include paths and linker flags.
+
+### 3. Minimal example
 
 ```cpp
 #include <sh1106.h>
@@ -185,7 +241,32 @@ g++ example.cpp $(pkg-config --cflags --libs sh1106) -o example
 ./example
 ```
 
-### Drawing API
+### ⚠️ Exclusive access
+
+**Only one process can have `/dev/sh1106` open at a time.**
+
+If the dashboard service is running, any other application trying to `open()` the device will get `EBUSY`. You must stop the dashboard first:
+
+```bash
+sudo systemctl stop sh1106-dashboard
+./my_app
+sudo systemctl start sh1106-dashboard
+```
+
+Or design your application to take over from the dashboard permanently.
+
+Hardware control via **sysfs** is always accessible regardless of who has the device open:
+
+```bash
+# These work even while another process has /dev/sh1106 open
+echo 128 | sudo tee /sys/class/sh1106_class/sh1106/contrast
+echo 1   | sudo tee /sys/class/sh1106_class/sh1106/invert
+cat /sys/class/sh1106_class/sh1106/stats
+```
+
+---
+
+## Drawing API
 
 ```cpp
 // Display control (via sysfs — always accessible)
@@ -242,9 +323,9 @@ oled.setDrawMode(DRAW_XOR);
 
 | Operation | Description |
 |---|---|
-| `open()` | Exclusive access — one process at a time |
-| `write(fd, buf, 1024)` | Push full framebuffer to display |
-| `read(fd, buf, 1024)` | Read current framebuffer |
+| `open()` | **Exclusive access** — one process at a time, returns `EBUSY` if occupied |
+| `write(fd, buf, 1024)` | Push full framebuffer to display — must be exactly 1024 bytes |
+| `read(fd, buf, 1024)` | Read current framebuffer state |
 | `ioctl(fd, cmd, arg)` | Hardware control commands |
 | `close()` | Release exclusive access |
 
@@ -362,4 +443,4 @@ GPL v3 — see [LICENSE](LICENSE)
 
 ## Author
 
-David Ruiz — [@yourusername](https://github.com/yourusername)
+David Ruiz — [@daavidruizz](https://github.com/daavidruizz)
