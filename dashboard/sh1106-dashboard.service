@@ -1,0 +1,22 @@
+[Unit]
+Description=SH1106 OLED Dashboard
+# Arrancar después de que la red esté lista y el driver cargado
+After=network-online.target sys-subsystem-net-devices-eth0.device
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/sh1106_dashboard
+Restart=on-failure
+RestartSec=5
+
+# Permisos para acceder a /dev/sh1106
+# Si el dispositivo pertenece a un grupo, añadir el usuario aquí
+User=root
+
+# Reiniciar si se cuelga
+TimeoutStartSec=10
+TimeoutStopSec=5
+
+[Install]
+WantedBy=multi-user.target

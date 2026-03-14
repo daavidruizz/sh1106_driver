@@ -1,0 +1,21 @@
+/dts-v1/;
+/plugin/;
+
+/ {
+    compatible = "brcm,bcm2712";
+
+    fragment@0 {
+        target = <&i2c1>;
+        __overlay__ {
+            #address-cells = <1>;
+            #size-cells = <0>;
+            status = "okay";
+
+            sh1106: sh1106@3c {
+                compatible = "sinowealth,sh1106";
+                reg = <0x3c>;
+                status = "okay";
+            };
+        };
+    };
+};

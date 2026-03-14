@@ -1,0 +1,16 @@
+[Unit]
+Description=SH1106 OLED probe via USB-I2C adapter
+# Esperar a que udev haya procesado los dispositivos USB
+After=systemd-udev-settle.service
+# El dashboard debe arrancar después de nosotros
+Before=sh1106-dashboard.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/bin/sh1106-probe.sh
+# Timeout generoso para dar tiempo al USB
+TimeoutStartSec=60
+
+[Install]
+WantedBy=multi-user.target

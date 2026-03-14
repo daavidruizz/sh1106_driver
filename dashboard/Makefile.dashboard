@@ -1,0 +1,62 @@
+# ============================================
+# Makefile para el dashboard SH1106
+# Usa libsh1106 si está instalada (pkg-config)
+# o los fuentes locales como fallback
+# ============================================
+
+CXX      := g++
+CXXFLAGS := -O2 -Wall -std=c++17
+TARGET   := sh1106_dashboard
+SRC      := dashboard.cpp
+
+# Detectar si libsh1106 está instalada via pkg-config
+PKG := $(shell pkg-config --exists sh1106 2>/dev/null && echo yes || echo no)
+
+ifeq ($(PKG), yes)
+    # Usar librería del sistema
+    CXXFLAGS += $(shell pkg-config --cflags sh1106)
+    LDFLAGS  := $(shell pkg-config --libs sh1106)
+    BUILD_MSG := "usando libsh1106 del sistema"
+else
+    # Fallback: compilar con fuentes locales
+    SRC      += sh1106.cpp
+    LDFLAGS  := -lm
+    BUILD_MSG := "usando fuentes locales (libsh1106 no instalada)"
+endif
+
+PREFIX   := /usr/local
+BINDIR   := $(PREFIX)/bin
+SVCDIR   := /etc/systemd/system
+
+all:
+	@echo "Compilando dashboard ($(BUILD_MSG))..."
+	$(CXX) $(CXXFLAGS) $(SRC) $(LDFLAGS) -o $(TARGET)
+	@echo "✓ $(TARGET) compilado"
+
+install: all
+	install -m 755 $(TARGET) $(BINDIR)/
+	install -m 644 sh1106-dashboard.service $(SVCDIR)/
+	systemctl daemon-reload
+	systemctl enable sh1106-dashboard
+	systemctl restart sh1106-dashboard
+	@echo "✓ Dashboard instalado y arrancado"
+	@echo "  systemctl status sh1106-dashboard"
+
+uninstall:
+	systemctl stop sh1106-dashboard 2>/dev/null || true
+	systemctl disable sh1106-dashboard 2>/dev/null || true
+	rm -f $(BINDIR)/$(TARGET)
+	rm -f $(SVCDIR)/sh1106-dashboard.service
+	systemctl daemon-reload
+	@echo "✓ Dashboard desinstalado"
+
+status:
+	systemctl status sh1106-dashboard
+
+logs:
+	journalctl -u sh1106-dashboard -f
+
+clean:
+	rm -f $(TARGET)
+
+.PHONY: all install uninstall status logs clean

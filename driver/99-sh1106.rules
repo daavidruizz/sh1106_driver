@@ -1,0 +1,8 @@
+# MEJORA 2: permisos automáticos para /dev/sh1106 sin sudo
+# udev aplica esta regla cuando el driver crea el device
+#
+# Instalar:
+#   sudo cp 99-sh1106.rules /etc/udev/rules.d/
+#   sudo udevadm control --reload-rules
+#   sudo udevadm trigger
+SUBSYSTEM=="sh1106_class", KERNEL=="sh1106", MODE="0666", GROUP="dialout"

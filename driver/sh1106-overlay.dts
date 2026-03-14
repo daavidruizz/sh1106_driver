@@ -1,0 +1,33 @@
+// Device Tree overlay para SH1106 OLED 128x64 via I2C
+// Hardware: Raspberry Pi 3B+, bus I2C-1, dirección 0x3C
+//
+// Compilar:
+//   dtc -@ -I dts -O dtb -o sh1106-overlay.dtbo sh1106-overlay.dts
+//
+// Instalar:
+//   sudo cp sh1106-overlay.dtbo /boot/overlays/
+//   echo "dtoverlay=sh1106" | sudo tee -a /boot/config.txt
+//
+/dts-v1/;
+/plugin/;
+
+/ {
+    compatible = "brcm,bcm2835";
+
+    fragment@0 {
+        // Apuntar al bus I2C-1 de la Pi (GPIO2=SDA, GPIO3=SCL)
+        target = <&i2c1>;
+
+        __overlay__ {
+            #address-cells = <1>;
+            #size-cells = <0>;
+            status = "okay";
+
+            sh1106: sh1106@3c {
+                compatible = "sinowealth,sh1106";  // debe coincidir con el driver
+                reg = <0x3c>;                      // dirección I2C 0x3C
+                status = "okay";
+            };
+        };
+    };
+};

@@ -1,0 +1,35 @@
+# Objetos de compilación del kernel
+*.o
+*.ko
+*.mod
+*.mod.c
+*.mod.o
+*.symvers
+*.order
+.tmp_versions/
+Module.symvers
+modules.order
+
+# Librería compilada
+*.so
+*.a
+lib/sh1106.o
+
+# Binarios
+dashboard/sh1106_dashboard
+*.dtbo
+
+# Compilación kernel
+/driver/.*.cmd
+/driver/*.unsigned
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
