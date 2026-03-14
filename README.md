@@ -362,4 +362,4 @@ GPL v3 — see [LICENSE](LICENSE)
 
 ## Author
 
-David Ruiz — [@yourusername](https://github.com/daavidruizz)
+David Ruiz — [@daavidruizz](https://github.com/daavidruizz)
