@@ -282,13 +282,13 @@ The included systemd service displays live system info:
 
 ```
 ┌─────────────────────────────┐
-│ 13/03/2026  21:34:05        │
+│ 13 03 2026  21 34 05        │
 │─────────────────────────────│
 │ pi5                         │
-│ 192.168.1.22                │
+│ 192 168 1 22                │
 │─────────────────────────────│
 │ CPU 23%  T47C               │
-│ RAM 412/926MB               │
+│ RAM 412 926MB               │
 │ UP 2d 3h 45m                │
 └─────────────────────────────┘
 ```
@@ -362,4 +362,4 @@ GPL v3 — see [LICENSE](LICENSE)
 
 ## Author
 
-David Ruiz — [@yourusername](https://github.com/yourusername)
+David Ruiz — [@yourusername](https://github.com/daavidruizz)
