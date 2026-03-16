@@ -16,8 +16,6 @@ Linux kernel driver and C++ userspace library for **SH1106 OLED 128x64** display
 |---|---|
 | ![Boot logo](docs/boot.jpg) | ![Dashboard](docs/dashboard.jpg) |
 
-> Add your photos to `docs/boot.jpg` and `docs/dashboard.jpg`
-
 ---
 
 ## Features
